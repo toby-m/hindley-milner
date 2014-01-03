@@ -1,11 +1,34 @@
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, ExtendedDefaultRules #-}
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import Control.Monad.State
 import Control.Applicative
+default (Int, Integer, Double)
+
+data LiteralValue = LInt Int
+                  | LChar Char
+                  | LBool Bool
+                  | LString String
+
+class    MakeLit a      where literal :: a -> Expression
+instance MakeLit Int    where literal = Literal . LInt
+instance MakeLit Char   where literal = Literal . LChar
+instance MakeLit String where literal = Literal . LString
+instance MakeLit Bool   where literal = Literal . LBool
+
+literalType (LInt _)    = "Int"
+literalType (LChar _)   = "Char"
+literalType (LBool _)   = "Bool"
+literalType (LString _) = "String"
+
+instance Show LiteralValue where
+	show (LInt i)    = show i
+	show (LChar i)   = show i
+	show (LBool i)   = show i
+	show (LString i) = show i
 
 type Symbol = String
-data Expression = Literal Int
+data Expression = Literal LiteralValue
                 | Variable Symbol
                 | Application Expression Expression
                 | Abstraction Symbol Expression
@@ -72,7 +95,7 @@ findVar (vars, _) s = case Map.lookup s vars of
                         Nothing -> liftM TVar newVar
 
 w :: Environment -> Expression -> State [Id] (Substitution, Type)
-w _   (Literal i)  = return (Map.empty, TConcrete "Int")
+w _   (Literal i)  = return (Map.empty, TConcrete $ literalType i)
 w env (Variable s) = do i <- findVar env s >>= inst
                         return (Map.empty, i)
 
@@ -137,18 +160,26 @@ inst t                 = return t
 
 exampleId = Abstraction "x" (Variable "x")
 example1  = Abstraction "y" (Abstraction "x" (Variable "y"))
-example2  = Application example1 (Literal 5)
-example3  = Let "y" (Literal 5) (Variable "y")
-example4  = Abstraction "y" (Abstraction "x" (Let "y" (Literal 5) (Variable "y")))
+example2  = Application example1 (literal True)
+example3  = Let "y" (literal 5) (Variable "y")
+example4  = Abstraction "y" (Abstraction "x" (Let "y" (literal 5) (Variable "y")))
 example5  = Let "id" exampleId (Variable "id")
 example6  = Let "id" exampleId (Application (Variable "id") (Variable "id"))
-example7  = Let "id" exampleId (Application (Variable "id") (Literal 7))
-example8  = Application (Variable "m") (Literal 7)
-example9  = Abstraction "m" (Let "y" (Variable "m") (Let "x" (Application (Variable "y") (Literal 8)) (Variable "x")))
-example10 = Let "id" (Abstraction "x" (Let "y" (Variable "x") (Variable "y"))) (Application (Application (Variable "id") (Variable "id")) (Literal 2))
+example7  = Let "id" exampleId (Application (Variable "id") (literal 7))
+example8  = Application (Variable "m") (literal 7)
+example9  = Abstraction "m" (Let "y" (Variable "m") (Let "x" (Application (Variable "y") (literal 8)) (Variable "x")))
+example10 = Let "id" (Abstraction "x" (Let "y" (Variable "x") (Variable "y"))) (Application (Application (Variable "id") (Variable "id")) (literal 2))
+example11 = Abstraction "m" (Application (Abstraction "x" (literal 7)) (literal 'g'))
+example12 = Let "m" (literal 't') (Variable "m")
 
-initials = (Map.singleton "Int" (TConcrete "Int"), [])
-variables = [[m] | m <- ['a'..'z']]
-runExample e = runState (w initials e) variables
-showExample e = show e ++ " :: " ++ (show . snd .fst $ runExample e)
-main = putStr . unlines $ map showExample [example1, example2, example3, example4, example5, example6, example7, example8, example9, example10] 
+inferType e = snd . fst $ runState (w initials e) varNames
+  where
+  initials = (concretes, [])
+  varNames = [f a b | b <- [0..], a <- ['a'..'z']] where f c n = if n == 0 then [c] else c:show n
+  concretes = Map.fromList . map (getPair.literalType.unwrap) $ lits
+  getPair l          = (l, TConcrete l)
+  unwrap (Literal l) = l
+  lits               = [literal 5, literal 'c', literal "string", literal True]
+
+showExample e = show e ++ " :: " ++ show (inferType e)
+main = putStr . unlines $ map showExample [example1, example2, example3, example4, example5, example6, example7, example8, example9, example10, example11, example12] 
