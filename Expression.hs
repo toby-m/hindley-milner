@@ -164,8 +164,10 @@ replace old new t@(TQuantified i ti) | i == new = t
                                      | i == old = TQuantified new (replace old new ti)
                                      | otherwise = TQuantified i (replace old new ti)
 
+makeStateful :: (a -> b) -> a -> State s b
+makeStateful f a = state $ \s -> (f a, s)
+
 inst :: Type -> State [Id] Type
-inst (TQuantified i t) = do newId <- newVar
-                            let inner = replace i newId t in
-                                return (TQuantified newId inner)
+inst (TQuantified i t) = newVar >>= makeStateful quant
+                       where quant newId = TQuantified newId (replace i newId t)
 inst t                 = return t
