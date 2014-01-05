@@ -23,11 +23,11 @@ example8  = Application (Variable "m") (literal 7)
 example9  = Abstraction "m" (Let "y" (Variable "m") (Let "x" (Application (Variable "y") (literal 8)) (Variable "x")))
 example10 = Let "id" (Abstraction "x" (Let "y" (Variable "x") (Variable "y"))) (Application (Application (Variable "id") (Variable "id")) (literal 2))
 example11 = Abstraction "m" (Application (Abstraction "x" (literal 7)) (literal 'g'))
-example12 = If (Variable "m") (literal 't') (Variable "m")
+example12 = Variable "m"
 example13 = Abstraction "x" (If (Variable "x") (Variable "x") (Variable "z"))
 example14 = Block [Variable "m", literal 7, literal 8]
 example15 = Let "id" exampleId (If (Application (Variable "id") (literal False))
-                                   (Application (Variable "id") (literal 9))
+                                   (Application (Variable "id") (literal True))
                                    (Application (Variable "id") (literal True)))
 example16 = Let "id" exampleId (Block [Application (Variable "id") (literal False), Application (Variable "id") (literal 9)])
 
@@ -35,7 +35,7 @@ inferType e = snd . fst $ runState (w Map.empty e) varNames
   where
   varNames  = [f a b | b <- [0..], a <- ['a'..'z']] where f c n = if n == 0 then [c] else c:show n
   concretes = Map.fromList . map (getPair.literalType.unwrap) $ lits
-  getPair l          = (l, TConcrete l)
+  getPair (TConcrete l) = (l, TConcrete l)
   unwrap (Literal l) = l
   lits               = [literal 5, literal 'c', literal "string", literal True]
 
