@@ -43,29 +43,34 @@ type Id = String
 data Type = TConcrete Id
           | TVar Id
           | TFunction Type Type
-          | TQuantified Id Type
           deriving (Eq)
 
 instance Show Type where
   show (TConcrete i) = i
   show (TVar i)      = i
   show (TFunction t1 t2) = "(" ++ show t1 ++ " -> " ++ show t2 ++ ")"
-  show (TQuantified i t) = "∀" ++ i ++ " " ++ show t
+
+data Scheme = Scheme [Id] Type
+instance Show Scheme where
+  show (Scheme vars t) = concatMap fa vars ++ " " ++ show t
+     where fa = (++) "∀"
 
 type Substitution = Map.Map Id Type
-type Environment = (Map.Map Id Type, [Symbol])
+type Environment = (Map.Map Id Scheme)
 
 class Types a where
   ftv :: a -> Set.Set Id
 
 instance Types Environment where
-  ftv (subs, _) = ftv $ Map.elems subs
+  ftv = ftv . Map.elems
 
 instance Types Type where
   ftv (TConcrete i)     = Set.empty
   ftv (TVar i)          = Set.singleton i
   ftv (TFunction t1 t2) = ftv t1 `Set.union` ftv t2
-  ftv (TQuantified i t) = Set.delete i (ftv t)
+
+instance Types Scheme where
+  ftv (Scheme vars t)   = ftv t `Set.difference` Set.fromList vars
 
 instance (Types a) => Types [a] where
   ftv [] = Set.empty
@@ -74,23 +79,24 @@ instance (Types a) => Types [a] where
 class Subs s where
   apply :: Substitution -> s -> s
 
+instance Subs Environment where
+  apply new = Map.map (apply new)
+
 instance Subs Substitution where
   apply = Map.union
-
-instance Subs Environment where
-  apply new (s, syms) = (apply new s, syms)
 
 instance Subs Type where
   apply new t@(TVar i)        = Map.findWithDefault t i new
   apply new (TFunction t1 t2) = TFunction (apply new t1) (apply new t2)
-  apply new (TQuantified i t) = let subs = Map.delete i new
-                                in TQuantified i (apply subs t)
   apply new t                 = t
 
-findVar :: Environment -> Symbol -> State [Id] Type
-findVar (vars, _) s = case Map.lookup s vars of
+instance Subs Scheme where
+  apply new (Scheme vars t)  = Scheme vars $ apply (foldr Map.delete new vars) t
+
+findVar :: Environment -> Symbol -> State [Id] Scheme
+findVar vars s = case Map.lookup s vars of
                         Just t  -> return t
-                        Nothing -> liftM TVar newVar
+                        Nothing -> liftM (Scheme []) newVar
 
 w :: Environment -> Expression -> State [Id] (Substitution, Type)
 w _   (Literal i)  = return (Map.empty, TConcrete $ literalType i)
@@ -99,13 +105,13 @@ w env (Variable s) = do i <- findVar env s >>= inst
 
 w env (Application e1 e2) = do (s1, t1) <- w env e1
                                (s2, t2) <- w (apply s1 env) e2
-                               var <- liftM TVar newVar
+                               var <- newVar
                                let v = unify (apply s2 t1) (TFunction t2 var)
                                  in return (v `apply` s2 `apply` s1, apply v var)
 
 w env (Abstraction sym e1) = do b <- newVar
-                                (s1, t1) <- w (simple sym (TVar b) env) e1
-                                let t2 = TFunction (TVar b) t1
+                                (s1, t1) <- w (simple sym (Scheme [] b) env) e1
+                                let t2 = TFunction b t1
                                   in return (s1, apply s1 t2)
 
 w env (Let sym e1 e2) = do (s1, t1) <- w env e1
@@ -128,46 +134,27 @@ w env (Block [x])    = w env x
 w env (Block (x:xs)) = do (s1, e1) <- w env x
                           w (apply s1 env) (Block xs)
 
-simple :: Id -> Type -> Environment -> Environment
-simple s t = apply (Map.singleton s t)
+simple :: Id -> Scheme -> Environment -> Environment
+simple = Map.insert
 
-generalise :: Environment -> Type -> Type
+generalise :: Environment -> Type -> Scheme
 generalise env t = let diff = Set.difference (ftv t) (ftv env)
-                   in wrapQuals t (Set.toList diff)
-                   where
-                   wrapQuals :: Type -> [Id] -> Type
-                   wrapQuals = foldl (flip TQuantified)
+                   in Scheme (Set.toList diff) t
 
 unify :: Type -> Type -> Substitution
 unify (TConcrete i1) (TConcrete i2) | i1 == i2  = Map.empty
                                     | otherwise = error $ "Mismatched types : " ++ i1 ++ " " ++ i2
-unify (TVar i1)  t2                 = Map.singleton i1 t2
+unify (TVar i1)  t2                 = Map.singleton i1 t2 -- lol occurs check
 unify t1         (TVar i2)          = Map.singleton i2 t1
-
 unify (TFunction t11 t12) (TFunction t21 t22) =
     let s1 = unify t11 t21
         s2 = unify (apply s1 t12) (apply s1 t22)
     in apply s2 s1
-
-unify (TQuantified _ t1) t2 = unify t1 t2
-unify t1 (TQuantified _ t2) = unify t1 t2
 unify t1 t2 = error $ "unify: " ++ show t1 ++ " " ++ show t2
 
-newVar :: State [Id] Id
-newVar = state $ \(s:ss) -> (s, ss)
+newVar :: State [Id] Type
+newVar = state $ \(s:ss) -> (TVar s, ss)
 
-replace :: Id -> Id -> Type -> Type
-replace old new t@(TConcrete i)      = if i == old then TConcrete new else t
-replace old new t@(TVar i)           = if i == old then TVar new else t
-replace old new (TFunction t1 t2)    = TFunction (replace old new t1) (replace old new t2)
-replace old new t@(TQuantified i ti) | i == new = t
-                                     | i == old = TQuantified new (replace old new ti)
-                                     | otherwise = TQuantified i (replace old new ti)
-
-makeStateful :: (a -> b) -> a -> State s b
-makeStateful f a = state $ \s -> (f a, s)
-
-inst :: Type -> State [Id] Type
-inst (TQuantified i t) = newVar >>= makeStateful quant
-                       where quant newId = TQuantified newId (replace i newId t)
-inst t                 = return t
+inst :: Scheme -> State [Id] Type
+inst (Scheme vars t) = do newVars <- mapM (\_ -> newVar) vars
+                          let s = Map.fromList (zip vars newVars) in return (apply s t)

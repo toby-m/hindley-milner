@@ -31,9 +31,8 @@ example15 = Let "id" exampleId (If (Application (Variable "id") (literal False))
                                    (Application (Variable "id") (literal True)))
 example16 = Let "id" exampleId (Block [Application (Variable "id") (literal False), Application (Variable "id") (literal 9)])
 
-inferType e = snd . fst $ runState (w initials e) varNames
+inferType e = snd . fst $ runState (w Map.empty e) varNames
   where
-  initials  = (concretes, [])
   varNames  = [f a b | b <- [0..], a <- ['a'..'z']] where f c n = if n == 0 then [c] else c:show n
   concretes = Map.fromList . map (getPair.literalType.unwrap) $ lits
   getPair l          = (l, TConcrete l)
