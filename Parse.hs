@@ -1,4 +1,4 @@
-module Parse ( readExpr )
+module Parse (readExpr, readData)
 where
 import Text.ParserCombinators.Parsec hiding (spaces)
 import System.Environment
@@ -32,9 +32,12 @@ parseInt :: Parser Expression
 parseInt = liftM (Literal . LInt . read) $ many1 digit
 
 parseVariable :: Parser Expression
-parseVariable = do first <- letter <|> symbol
-                   rest <- many (letter <|> digit <|> symbol)
-                   return $ Variable (first:rest)
+parseVariable = liftM Variable parseSymbol
+
+parseSymbol :: Parser String
+parseSymbol = do first <- letter <|> symbol
+                 rest <- many (letter <|> digit <|> symbol)
+                 return (first:rest)
 
 parseExpr :: Parser Expression
 parseExpr = parseInt
@@ -101,3 +104,28 @@ readExpr :: String -> Expression
 readExpr input = case parse parseExpr "scheme" input of
   Left err -> error $ "No match: " ++ show err
   Right val -> val
+
+readData :: String -> DataDeclaration
+readData input = case parse parseData "data" input of
+  Left err -> error $ "No match: " ++ show err
+  Right val -> val
+
+parseData :: Parser DataDeclaration
+parseData = do string "(data"
+               spaces
+               id <- parseSymbol
+               spaces
+               cons <- sepBy parseConstructor spaces
+               char ')'
+               return $ DataDeclaration id cons
+
+parseConstructor :: Parser Constructor
+parseConstructor = parseSimpleConstructor <|> parseComplexConstructor
+  where parseComplexConstructor = do char '('
+                                     id <- parseSymbol
+                                     spaces
+                                     args <- sepBy parseSymbol spaces
+                                     char ')'
+                                     return $ Constructor id args
+        parseSimpleConstructor  = do id <- parseSymbol
+                                     return $ Constructor id []

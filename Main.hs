@@ -28,11 +28,20 @@ runProgram ds e = snd $ evalState (w env e) varNames
 showProgram :: [DataDeclaration] -> Expression -> String
 showProgram ds e = show e ++ " :: " ++ show (runProgram ds e)
 
-main = mapM (putStrLn . showProgram [colours, intList] . readExpr) examples
+--main = mapM (putStrLn . showProgram [colours, intList] . readExpr) examples
+main = mapM print $ map readData dataDecs ++ [colours, intList]
+dataDecs = ["(data Colour Red Green Yellow)"
+           ,"(data BoolList Empty (Cons Bool BoolList))"
+           ]
+
 examples = [
              "(lambda (x) (y x))"
            , "(lambda (i j) (i j))"  
            , "(lambda (x) (let g Green (if x Red g)))"
            , "((Cons 5) Empty)"
            , "(let x (lambda (x) Green) (if True x ((lambda (x y) Red) 0)))"
+           , "Empty"
+           , "Cons"
+           , "(Cons 9)"
+           , "((Cons 9) ((Cons 10) Empty))"
            ]
