@@ -12,20 +12,12 @@ instance MakeLit String where literal = Literal . LString
 instance MakeLit Bool   where literal = Literal . LBool
 
 exampleId = Abstraction "x" (Variable "x")
-example1  = Abstraction "y" (Abstraction "x" (Variable "y"))
-example2  = Application example1 (literal True)
-example3  = Let "y" (literal 5) (Variable "y")
-example4  = Abstraction "y" (Abstraction "x" (Let "y" (literal 5) (Variable "y")))
-example5  = Let "id" exampleId (Variable "id")
-example6  = Let "id" exampleId (Application (Variable "id") (Variable "id"))
-example7  = Let "id" exampleId (Application (Variable "id") (literal 7))
-example8  = Application (Variable "m") (literal 7)
+example1  = Abstraction "x" (If (Variable "x") (Variable "Red") (Variable "Green"))
+example2  = Let "m" (Variable "Cons") (Abstraction "x" (Application (Variable "x") (Variable "m")))
 example9  = Abstraction "m" (Let "y" (Variable "m") (Let "x" (Application (Variable "y") (literal 8)) (Variable "x")))
 example10 = Let "id" (Abstraction "x" (Let "y" (Variable "x") (Variable "y"))) (Application (Application (Variable "id") (Variable "id")) (literal 2))
 example11 = Abstraction "m" (Application (Abstraction "x" (literal 7)) (literal 'g'))
-example12 = Variable "m"
 example13 = Abstraction "x" (If (Variable "x") (Variable "x") (Variable "z"))
-example14 = Block [Variable "m", literal 7, literal 8]
 example15 = Let "id" exampleId (If (Application (Variable "id") (literal False))
                                    (Application (Variable "id") (literal True))
                                    (Application (Variable "id") (literal True)))
@@ -47,5 +39,14 @@ runProgram ds e = snd $ evalState (w env e) varNames
 showProgram :: [DataDeclaration] -> Expression -> String
 showProgram ds e = show e ++ " :: " ++ show (runProgram ds e)
 
-main = print $ showProgram [colours, intList] (Application (Variable "Cons") (literal 5))
---main = putStr . unlines $ map showExample [example1, example2, example3, example4, example5, example6, example7, example8, example9, example10, example11, example12, example13, example14, example15, example16]
+main = mapM (putStrLn . showProgram [colours, intList]) examples
+examples = [
+             example1
+           , example2
+           , example9
+           , example10
+           , example11
+           , example13
+           , example15
+           , example16
+           ]

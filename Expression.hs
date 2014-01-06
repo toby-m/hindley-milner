@@ -51,7 +51,7 @@ instance Show Expression where
   show (Abstraction s e)   = "λ" ++ s ++ "." ++ show e
   show (Let s e1 e2)       = "let " ++ s ++ " = " ++ show e1 ++ " in " ++ show e2
   show (If c t e)          = "(if " ++ show c ++ " " ++ show t ++ " " ++ show e ++ ")"
-  show (Block xs)          = "(do \n" ++ unlines (map show xs) ++ ")"
+  show (Block xs)          = "(do \n" ++ unlines (map (("\t" ++ ).show) xs) ++ ")"
 
 type Id = String
 data Type = TConcrete Id
