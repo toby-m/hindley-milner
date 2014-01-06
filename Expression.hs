@@ -2,6 +2,7 @@
 module Expression where
 import Control.Monad.State
 import Control.Applicative
+import Data.Char (isAsciiUpper)
 import Data.List (delete)
 import qualified Data.Set as Set
 import qualified Data.Map as Map
@@ -31,6 +32,17 @@ data Expression = Literal LiteralValue
                 | Let Symbol Expression Expression
                 | If Expression Expression Expression
                 | Block [Expression]
+
+data Constructor     = Constructor Id [Id] deriving Show
+data DataDeclaration = DataDeclaration  Id [Constructor] deriving Show
+
+getDataType :: DataDeclaration  -> Substitution
+getDataType (DataDeclaration name cons) = Map.fromList $ map (makeConstructor name) cons 
+
+makeConstructor :: Id -> Constructor -> (Id, Type)
+makeConstructor t (Constructor name args) = (name, foldr (TFunction . get) (get t) args)
+  where get id@(i:is) | isAsciiUpper i = TConcrete id
+                      | otherwise      = TVar id
 
 instance Show Expression where
   show (Literal i)         = show i

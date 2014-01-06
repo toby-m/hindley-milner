@@ -31,13 +31,21 @@ example15 = Let "id" exampleId (If (Application (Variable "id") (literal False))
                                    (Application (Variable "id") (literal True)))
 example16 = Let "id" exampleId (Block [Application (Variable "id") (literal False), Application (Variable "id") (literal 9)])
 
-inferType e = snd . fst $ runState (w Map.empty e) varNames
-  where
-  varNames  = [f a b | b <- [0..], a <- ['a'..'z']] where f c n = if n == 0 then [c] else c:show n
-  concretes = Map.fromList . map (getPair.literalType.unwrap) $ lits
-  getPair (TConcrete l) = (l, TConcrete l)
-  unwrap (Literal l) = l
-  lits               = [literal 5, literal 'c', literal "string", literal True]
+colours = DataDeclaration "Colour" [Constructor "Red" [], Constructor "Green" [], Constructor "Blue" []]
+intList = DataDeclaration "IntList" [Constructor "Empty" [], Constructor "Cons" ["Int", "IntList"]]
 
+varNames  = [f a b | b <- [0..], a <- ['a'..'z']] where f c n = if n == 0 then [c] else c:show n
+inferType e = snd . fst $ runState (w Map.empty e) varNames
 showExample e = show e ++ " :: " ++ show (inferType e)
-main = putStr . unlines $ map showExample [example1, example2, example3, example4, example5, example6, example7, example8, example9, example10, example11, example12, example13, example14, example15, example16]
+
+runProgram :: [DataDeclaration] -> Expression -> Type
+runProgram ds e = snd $ evalState (w env e) varNames
+  where
+  cons = foldr1 apply (map getDataType ds)
+  env  = Map.map (Scheme []) cons
+
+showProgram :: [DataDeclaration] -> Expression -> String
+showProgram ds e = show e ++ " :: " ++ show (runProgram ds e)
+
+main = print $ showProgram [colours, intList] (Application (Variable "Cons") (literal 5))
+--main = putStr . unlines $ map showExample [example1, example2, example3, example4, example5, example6, example7, example8, example9, example10, example11, example12, example13, example14, example15, example16]
