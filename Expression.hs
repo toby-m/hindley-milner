@@ -11,6 +11,7 @@ data LiteralValue = LInt Int
                   | LChar Char
                   | LBool Bool
                   | LString String
+                  deriving (Eq)
 
 instance Show LiteralValue where
   show (LInt i)    = show i
@@ -32,6 +33,7 @@ data Expression = Literal LiteralValue
                 | Let Symbol Expression Expression
                 | If Expression Expression Expression
                 | Block [Expression]
+                deriving (Eq)
 
 data Constructor     = Constructor Id [Id] deriving Show
 data DataDeclaration = DataDeclaration  Id [Constructor] deriving Show

@@ -3,3 +3,4 @@ Tests
 *.hi
 *.o
 *.swp
+ParseTests
