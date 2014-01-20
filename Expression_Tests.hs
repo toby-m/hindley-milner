@@ -1,4 +1,4 @@
-module Expression.Tests (tests) where
+module Expression_Tests (tests) where
 import Expression
 import Control.Monad.State
 import Data.Char  (isAsciiUpper)

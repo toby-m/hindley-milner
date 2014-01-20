@@ -1,4 +1,4 @@
-module Parse.Tests (tests) where
+module Parse_Tests (tests) where
 import Expression
 import Parse (readExpr, readData)
 import Test.HUnit

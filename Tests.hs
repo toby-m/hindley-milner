@@ -1,7 +1,7 @@
 import Test.HUnit
-import qualified Parse.Tests as Parse
-import qualified Expression.Tests as Expression
-import qualified Unification.Tests as Unification
+import qualified Parse_Tests as Parse
+import qualified Expression_Tests as Expression
+import qualified Unification_Tests as Unification
 
 main = runTestText (PutText printOut 0) $ TestList 
   [ Parse.tests

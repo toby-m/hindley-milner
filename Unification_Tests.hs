@@ -1,4 +1,4 @@
-module Unification.Tests (tests) where
+module Unification_Tests (tests) where
 import Test.HUnit
 import Expression
 import Data.Char (isAsciiLower)
