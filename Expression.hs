@@ -35,8 +35,8 @@ data Expression = Literal LiteralValue
                 | Block [Expression]
                 deriving (Eq)
 
-data Constructor     = Constructor Id [Id] deriving Show
-data DataDeclaration = DataDeclaration  Id [Constructor] deriving Show
+data Constructor     = Constructor Id [Id] deriving (Show, Eq)
+data DataDeclaration = DataDeclaration  Id [Constructor] deriving (Show, Eq)
 
 getDataType :: DataDeclaration  -> Substitution
 getDataType (DataDeclaration name cons) = Map.fromList $ map (makeConstructor name) cons 

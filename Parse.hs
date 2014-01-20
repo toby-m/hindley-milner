@@ -42,6 +42,7 @@ parseSymbol = do first <- letter <|> symbol
 parseExpr :: Parser Expression
 parseExpr = parseInt
         <|> parseChar
+        <|> parseString
         <|> parseBool
         <|> parseVariable
         <|> try parseLambda
