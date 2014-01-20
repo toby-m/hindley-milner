@@ -1,5 +1,6 @@
-module Expression_Tests (tests) where
-import Expression
+module Inference_Tests (tests) where
+import Inference
+import Types
 import Control.Monad.State
 import Data.Char  (isAsciiUpper)
 import Data.Maybe (isJust)

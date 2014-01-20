@@ -1,11 +1,11 @@
 import Test.HUnit
 import qualified Parse_Tests as Parse
-import qualified Expression_Tests as Expression
+import qualified Inference_Tests as Inference
 import qualified Unification_Tests as Unification
 
 main = runTestText (PutText printOut 0) $ TestList 
   [ Parse.tests
-  , Expression.tests
+  , Inference.tests
   , Unification.tests
   ]
 

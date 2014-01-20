@@ -1,6 +1,7 @@
 module Unification_Tests (tests) where
 import Test.HUnit
-import Expression
+import Types
+import Unification
 import Data.Char (isAsciiLower)
 import Control.Arrow (second)
 import qualified Data.Map as Map

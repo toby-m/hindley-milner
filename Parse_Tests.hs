@@ -1,5 +1,5 @@
 module Parse_Tests (tests) where
-import Expression
+import Types
 import Parse (readExpr, readData)
 import Test.HUnit
 
