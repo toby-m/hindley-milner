@@ -57,27 +57,6 @@ variableNamingTests = "Variable Naming" ~:
   , "id not in range" ~: infer "hi"  ~?= mk "a"
   ]
 
-ftvTests = "Free type variables" ~:
-  [ "Environment" ~:
-    [ "Empty"    ~: Set.empty         ~=? ftv emptyEnv
-    , "Free"     ~: Set.singleton "f" ~=? ftv (simpleEnv "v" (mk "f"))
-    , "Concrete" ~: Set.empty         ~=? ftv (simpleEnv "v" (mk "C"))
-    ]
-  ]
-
-applyTests = "Apply" ~:
-  [ "Substitution" ~:
-    [ "Combine"  ~: subs [("a", "b"), ("c", "d")] ~=? apply (sub "a" "b") (sub "c" "d")
-    , "Override" ~: sub "a" "b"                   ~=? apply (sub "a" "b") (sub "a" "G")
-    , "Inner"    ~: subs [("a","g"),("b","g")]    ~=? apply (sub "b" "g") (sub "a" "b")
-    ]
-  ]
-  where
-  sub :: Symbol -> Id -> Substitution
-  sub a b = Map.singleton a (mk b)
-  subs :: [(Symbol, Id)] -> Substitution
-  subs = Map.fromList . map (second mk)
-
 contains :: (Show a, Eq a) => [(a, a)] -> (a, a) -> Assertion
 contains xs (a, b) = assertBool "" (matchingTypes a b xs)
   where pprint = "Expected " ++ show (a,b) ++ " in " ++ show xs
@@ -96,7 +75,5 @@ ifInference = "If Statement" ~:
 tests = "Expression" ~:
         [ simpleTypingTests
         , variableNamingTests
-        , applyTests
-        , ftvTests
         , ifInference
         ]

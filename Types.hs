@@ -64,7 +64,7 @@ instance Show Type where
   show (TVar i)      = i
   show (TFunction t1 t2) = "(" ++ show t1 ++ " -> " ++ show t2 ++ ")"
 
-data Scheme = Scheme [Id] Type
+data Scheme = Scheme [Id] Type deriving (Eq)
 instance Show Scheme where
   show (Scheme vars t) = concatMap ("∀" ++) vars ++ " " ++ show t
 
