@@ -1,20 +1,13 @@
 module Inference_Tests (tests) where
+import TestHelpers
 import Inference
 import Types
 import Parse
 import Control.Monad.State
-import Control.Arrow (second)
-import Data.Char  (isAsciiLower)
 import Data.Maybe (isJust)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Test.HUnit
-
-emptyEnv :: Environment
-emptyEnv = Map.empty
-
-simpleEnv :: Id -> Type -> Environment
-simpleEnv i t = Map.singleton i (Scheme [] t)
 
 evaluateType env e = evalState (w env e) alphabet
   where alphabet = map (:[]) ['a'..'z']
@@ -36,13 +29,13 @@ inferWith i t = inferWithEnv (simpleEnv i t)
 infer :: String -> Type
 infer = inferWithEnv emptyEnv
 
-mk v@(x:_) = if isAsciiLower x then TVar v else TConcrete v
-fn :: [Id] -> Type
-fn = foldl1 TFunction . map mk
-var = Variable
+variableNamingTests = "Variable Naming" ~:
+  [ "id in range"     ~: infer "x"   ~?= mk "x"
+  , "id not in range" ~: infer "hi"  ~?= mk "a"
+  ]
 
 simpleTypingTests = "Simple Typing" ~:
-  [ "Abstraction" ~: fn ["a", "a"] ~=? infer "(lambda (x) x)"
+  [ "Abstraction" ~: fn "a" "a"    ~=? infer "(lambda (x) x)"
   , "Lookup"      ~: mk "x"        ~=? inferWith "b" (mk "x") "b"
   , "Literals"    ~:
     [ "Bool"      ~: mk "Bool"     ~=? infer "#t"
@@ -52,13 +45,8 @@ simpleTypingTests = "Simple Typing" ~:
     ]
   ]
 
-variableNamingTests = "Variable Naming" ~:
-  [ "id in range"     ~: infer "x"   ~?= mk "x"
-  , "id not in range" ~: infer "hi"  ~?= mk "a"
-  ]
-
 contains :: (Show a, Eq a) => [(a, a)] -> (a, a) -> Assertion
-contains xs (a, b) = assertBool "" (matchingTypes a b xs)
+contains xs (a, b) = assertBool pprint (matchingTypes a b xs)
   where pprint = "Expected " ++ show (a,b) ++ " in " ++ show xs
 
 matchingTypes :: (Eq a) => a -> a -> [(a, a)] -> Bool

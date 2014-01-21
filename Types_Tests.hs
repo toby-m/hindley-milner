@@ -1,6 +1,5 @@
 module Types_Tests (tests) where
 import Types
-import Parse
 import Control.Arrow (second)
 import Data.Char  (isAsciiLower)
 import qualified Data.Map as Map
