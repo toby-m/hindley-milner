@@ -10,7 +10,7 @@ empty = Map.empty
 single = Map.singleton
 pairs = Map.fromList . map (second mk)
 
-simpleUnifyTests = "Simple" ~: TestList
+simpleUnifyTests = "Simple" ~:
   [ "Variables"     ~: unify (mk "a") (mk "b")     ~?= single "a" (mk "b")
   , "Var & Conc"    ~: unify (mk "a") (mk "B")     ~?= single "a" (mk "B")
   , "Conc & Var"    ~: unify (mk "A") (mk "b")     ~?= single "b" (mk "A")
@@ -30,7 +30,7 @@ functionUnifyTests = "Nested Functions" ~:
                 ~?= Map.fromList [("a", fn "c" "d"), ("b", mk "e")]
   ]
 
-tests = "Unification" ~: TestList
+tests = "Unification" ~:
   [ simpleUnifyTests
   , functionUnifyTests
   ]

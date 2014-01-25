@@ -3,7 +3,7 @@ import Types
 import Parse (readExpr, readData)
 import Test.HUnit
 
-exprTests = "Expressions" ~: TestList
+exprTests = "Expressions" ~:
   [ "Variable"       ~: readExpr "x"              ~?= var "x"
   , "Lambda"         ~: readExpr "(lambda (x) x)" ~?= Abstraction "x" (var "x")
   , "If"             ~: readExpr "(if c t f)"     ~?= If (var "c") (var "t") (var "f")
@@ -17,7 +17,7 @@ exprTests = "Expressions" ~: TestList
   ]
   where var = Variable
 
-dataTests = "Data declarations" ~: TestList
+dataTests = "Data declarations" ~:
   [ "Single"      ~:  readData "(data A B)"         ~?= dt "A" [enum "B"]
   , "Enum"        ~:  readData "(data C R B)"       ~?= dt "C" [enum "R", enum "B"]
   , "IntList"     ~:  readData "(data L E (C I L))" ~?= dt "L" [enum "E", con "C" ["I", "L"]]
@@ -29,4 +29,4 @@ dataTests = "Data declarations" ~: TestList
   enum a = Constructor a []
   dt = DataDeclaration
 
-tests = "Parsing" ~: TestList [ exprTests, dataTests ]
+tests = "Parsing" ~: [ exprTests, dataTests ]

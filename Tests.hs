@@ -1,8 +1,8 @@
 import Test.HUnit
-import qualified Types_Tests as Types
 import qualified Parse_Tests as Parse
-import qualified Inference_Tests as Inference
+import qualified Types_Tests as Types
 import qualified Unification_Tests as Unification
+import qualified Inference_Tests as Inference
 
 main = runTestText (PutText printOut 0) $ TestList 
   [ Parse.tests
