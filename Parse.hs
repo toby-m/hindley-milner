@@ -34,6 +34,11 @@ parseInt = liftM (Literal . LInt . read) $ many1 digit
 parseVariable :: Parser Expression
 parseVariable = liftM Variable parseSymbol
 
+parseDataSymbol :: Parser String
+parseDataSymbol = do first <- letter
+                     rest <- many (letter <|> digit)
+                     return (first:rest)
+
 parseSymbol :: Parser String
 parseSymbol = do first <- letter <|> symbol
                  rest <- many (letter <|> digit <|> symbol)
@@ -114,11 +119,15 @@ readData input = case parse parseData "data" input of
 parseData :: Parser DataDeclaration
 parseData = do string "(data"
                spaces
-               id <- parseSymbol
+               char '('
+               ids <- sepBy parseDataSymbol spaces
+               char ')'
+               spaces
+               char '='
                spaces
                cons <- sepBy parseConstructor spaces
                char ')'
-               return $ DataDeclaration id cons
+               return $ DataDeclaration ids cons
 
 parseConstructor :: Parser Constructor
 parseConstructor = parseSimpleConstructor <|> parseComplexConstructor

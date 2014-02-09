@@ -1,5 +1,6 @@
 module Types_Tests (tests) where
 import Types
+import Parse (readData)
 import Control.Arrow (second)
 import Data.Char  (isAsciiLower)
 import qualified Data.Map as Map
@@ -39,8 +40,11 @@ es :: Type -> Scheme
 es = Scheme []
 
 -- Scheme
-sc :: Id -> Type -> Scheme
-sc a = Scheme [a]
+forAll :: Id -> Type -> Scheme
+forAll a = Scheme [a]
+
+-- Constructor
+cons = Constructor
 
 ftvTests = "Free type variables" ~:
   [ "Environment" ~:
@@ -57,8 +61,8 @@ ftvTests = "Free type variables" ~:
     ]
   , "Scheme"      ~:
     [ "Empty"     ~: single "a"       ~=? ftv (es (mk "a"))
-    , "Masked"    ~: empty            ~=? ftv (sc "a" (mk "a"))
-    , "Mixed"     ~: single "b"       ~=? ftv (sc "a" (fn "a" "b"))
+    , "Masked"    ~: empty            ~=? ftv (forAll "a" (mk "a"))
+    , "Mixed"     ~: single "b"       ~=? ftv (forAll "a" (fn "a" "b"))
     ]
   ]
   where
@@ -83,12 +87,35 @@ applyTests = "Apply" ~:
     ]
   , "Scheme"         ~:
     [ "Empty"        ~: es (mk "b")                   ~=? apply (sub "a" "b") (es (mk "a"))
-    , "Masked"       ~: sc "a" (mk "a")               ~=? apply (sub "a" "b") (sc "a" (mk "a"))
-    , "Mixed"        ~: sc "a" (fn "a" "c")           ~=? apply (sub "b" "c") (sc "a" (fn "a" "b"))
+    , "Masked"       ~: forAll "a" (mk "a")               ~=? apply (sub "a" "b") (forAll "a" (mk "a"))
+    , "Mixed"        ~: forAll "a" (fn "a" "c")           ~=? apply (sub "b" "c") (forAll "a" (fn "a" "b"))
     ]
   ]
+
+dataConsTests = "Data Constructors" ~:
+  [ "Variable" ~: ("C", fn "b" "a") ~=? makeConstructor (mk "a") (cons "C" ["b"])
+  , "Concrete" ~: ("C", fn "B" "A") ~=? makeConstructor (mk "A") (cons "C" ["B"])
+  , "Mixed"    ~: ("C", ft (mk "a") $ ft (mk "b") $ fn "c" "D")
+               ~=? makeConstructor (mk "D") (cons "C" ["a", "b", "c"])
+  ]
+
+getDataTypeTests = "Data Types" ~:
+  [ "Maybe Nothing" ~: Map.singleton "N" schemeN                     ~=? getDataType maybeN
+  , "Maybe Just"    ~: Map.singleton "J" schemeJ                     ~=? getDataType maybeJ
+  , "Maybe Full"    ~: Map.fromList [("J", schemeJ), ("N", schemeN)] ~=? getDataType maybe
+  ]
+  where
+    decl     = DataDeclaration . words
+    param    = TParam . map mk
+    maybeN   = decl "M a" [cons "N" []]
+    maybeJ   = decl "M a" [cons "J" ["a"]]
+    maybe    = decl "M a" [cons "N" [], cons "J" ["a"]]
+    schemeJ  = forAll "a" $ ft (mk "a") (param ["M", "a"])
+    schemeN  = forAll "a" $ param ["M", "a"]
 
 tests = "Expression" ~:
         [ applyTests
         , ftvTests
+        , dataConsTests
+        , getDataTypeTests
         ]

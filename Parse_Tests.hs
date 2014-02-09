@@ -18,11 +18,13 @@ exprTests = "Expressions" ~:
   where var = Variable
 
 dataTests = "Data declarations" ~:
-  [ "Single"      ~:  readData "(data A B)"         ~?= dt "A" [enum "B"]
-  , "Enum"        ~:  readData "(data C R B)"       ~?= dt "C" [enum "R", enum "B"]
-  , "IntList"     ~:  readData "(data L E (C I L))" ~?= dt "L" [enum "E", con "C" ["I", "L"]]
-  , "Complicated" ~:  readData "(data A B (C E) (F G H) (I J K))"
-                  ~?= dt "A" [enum "B", con "C" ["E"], con "F" ["G", "H"], con "I" ["J", "K"]]
+  [ "Single"      ~:  readData "(data (A) = B)"               ~?= dt ["A"] [enum "B"]
+  , "Enum"        ~:  readData "(data (C) = R B)"             ~?= dt ["C"] [enum "R", enum "B"]
+  , "IntList"     ~:  readData "(data (L) = E (C I L))"       ~?= dt ["L"] [enum "E", con "C" ["I", "L"]]
+  , "Complicated" ~:  readData "(data (A) = B (C E) (F G H) (I J K))"
+                  ~?= dt ["A"] [enum "B", con "C" ["E"], con "F" ["G", "H"], con "I" ["J", "K"]]
+  , "Maybe a"     ~:  readData "(data (M a) = N (J a))"       ~?= dt ["M", "a"] [enum "N", con "J" ["a"]]
+  , "Either a b"  ~:  readData "(data (E a b) = (L a) (R b))" ~?= dt ["E", "a", "b"] [con "L" ["a"], con "R" ["b"]]
   ]
   where
   con = Constructor
