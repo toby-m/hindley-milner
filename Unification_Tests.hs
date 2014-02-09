@@ -11,13 +11,13 @@ single = Map.singleton
 pairs = Map.fromList . map (second mk)
 
 simpleUnifyTests = "Simple" ~:
-  [ "Variables"     ~: unify (mk "a") (mk "b")     ~?= single "a" (mk "b")
-  , "Var & Conc"    ~: unify (mk "a") (mk "B")     ~?= single "a" (mk "B")
-  , "Conc & Var"    ~: unify (mk "A") (mk "b")     ~?= single "b" (mk "A")
-  , "Matching Conc" ~: unify (mk "A") (mk "A")     ~?= empty
-  , "Funcs Var"     ~: unify (fn "a" "b") (mk "x")   ~?= single "x" (fn "a" "b")
+  [ "Variables"     ~: unify (mk "a") (mk "b")         ~?= single "a" (mk "b")
+  , "Var & Conc"    ~: unify (mk "a") (mk "B")         ~?= single "a" (mk "B")
+  , "Conc & Var"    ~: unify (mk "A") (mk "b")         ~?= single "b" (mk "A")
+  , "Matching Conc" ~: unify (mk "A") (mk "A")         ~?= empty
+  , "Funcs Var"     ~: unify (fn "a" "b") (mk "x")     ~?= single "x" (fn "a" "b")
   , "Funcs Vars"    ~: unify (fn "a" "b") (fn "c" "d") ~?= pairs [("a", "c"), ("b", "d")]
-  , "Funcs Concs"   ~: unify (fn "A" "B") (fn "c" "d") ~?= pairs [("c", "A"), ("d", "B")]
+  , "Funcs Concs"   ~: unify (fn "A" "b") (fn "c" "D") ~?= pairs [("c", "A"), ("b", "D")]
   ]
 
 functionUnifyTests = "Nested Functions" ~:
