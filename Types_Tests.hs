@@ -74,7 +74,8 @@ applyTests = "Apply" ~:
   [ "Substitution"   ~:
     [ "Combine"      ~: subs [("a", "b"), ("c", "d")] ~=? apply (sub "a" "b") (sub "c" "d")
     , "Override"     ~: sub "a" "b"                   ~=? apply (sub "a" "b") (sub "a" "G")
-    , "Inner"        ~: subs [("a","g"),("b","g")]    ~=? apply (sub "b" "g") (sub "a" "b")
+    , "Chained"      ~: subs [("a", "b"), ("c", "b")] ~=? apply (sub "a" "b") (sub "c" "a")
+    , "Replace"      ~: subs [("b", "g"), ("e", "g")] ~=? apply (sub "b" "g") (sub "b" "e")
     ]
   , "Type"           ~:
     [ "Var"          ~: mk "b"                        ~=? apply (sub "a" "b") (mk "a")
@@ -106,12 +107,12 @@ getDataTypeTests = "Data Types" ~:
   ]
   where
     decl     = DataDeclaration . words
-    param    = TParam . map mk
+    param i  = TParam i . map mk
     maybeN   = decl "M a" [cons "N" []]
     maybeJ   = decl "M a" [cons "J" ["a"]]
     maybe    = decl "M a" [cons "N" [], cons "J" ["a"]]
-    schemeJ  = forAll "a" $ ft (mk "a") (param ["M", "a"])
-    schemeN  = forAll "a" $ param ["M", "a"]
+    schemeJ  = forAll "a" $ ft (mk "a") (param "M" ["a"])
+    schemeN  = forAll "a" $ param "M" ["a"]
 
 tests = "Expression" ~:
         [ applyTests

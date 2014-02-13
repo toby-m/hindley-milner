@@ -1,7 +1,10 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, ExtendedDefaultRules #-}
 module Types where
+import Control.Monad (liftM)
 import Data.Char (isAsciiUpper)
 import Data.List (delete)
+import Data.Maybe (fromJust, mapMaybe, catMaybes, isJust)
+import Data.Tuple (swap)
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 
@@ -40,7 +43,7 @@ getType :: Id -> Type
 getType id@(i:_) = if isAsciiUpper i then TConcrete id else TVar id
 
 getDataType :: DataDeclaration -> Environment
-getDataType (DataDeclaration ids cons) = let ret = TParam . map getType $ ids
+getDataType (DataDeclaration (i:ids) cons) = let ret = TParam i . map getType $ ids
                                          in Map.fromList $ map (makeScheme . makeConstructor ret) cons
   where makeScheme (i, t) = (i, Scheme (Set.toList $ ftv t) t)
 
@@ -60,14 +63,14 @@ type Id = String
 data Type = TConcrete Id
           | TVar Id
           | TFunction Type Type
-          | TParam [Type]
+          | TParam Id [Type]
           deriving (Eq)
 
 instance Show Type where
   show (TConcrete i) = i
   show (TVar i)      = i
   show (TFunction t1 t2) = "(" ++ show t1 ++ " -> " ++ show t2 ++ ")"
-  show (TParam ts)   = unwords $ map show ts
+  show (TParam i ts) = unwords $ i : map show ts
 
 data Scheme = Scheme [Id] Type deriving (Eq)
 instance Show Scheme where
@@ -88,14 +91,21 @@ instance Types Type where
   ftv (TConcrete i)     = Set.empty
   ftv (TVar i)          = Set.singleton i
   ftv (TFunction t1 t2) = ftv t1 `Set.union` ftv t2
-  ftv (TParam ts)       = foldr (Set.union.ftv) Set.empty ts
+  ftv (TParam _ ts)     = foldr (Set.union.ftv) Set.empty ts
   apply new t@(TVar i)        = Map.findWithDefault t i new
   apply new (TFunction t1 t2) = TFunction (apply new t1) (apply new t2)
   apply new t                 = t
 
 instance Types Substitution where
   ftv = Set.fromList . Map.keys
-  apply new set = new `Map.union` Map.map (apply new) set
+  apply new set = let primary = new `Map.union` Map.map (apply new) set
+                      updated = Map.map (apply new) $ invertVarSubs (set `Map.intersection` new)
+                  in primary `Map.union` updated
+
+invertVarSubs :: Substitution -> Substitution
+invertVarSubs = makeSubs . Map.map fromJust . Map.filter isJust . Map.map extract
+  where extract t = case t of (TVar i) -> Just i; otherwise -> Nothing
+        makeSubs  = Map.map TVar . Map.fromList . map swap . Map.toList
 
 instance Types Scheme where
   ftv (Scheme vars t)   = ftv t `Set.difference` Set.fromList vars
