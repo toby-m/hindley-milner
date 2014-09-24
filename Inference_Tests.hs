@@ -6,7 +6,6 @@ import Parse
 import Control.Monad.State
 import Data.Maybe (isJust)
 import qualified Data.Map as Map
-import qualified Data.Set as Set
 import Test.HUnit
 
 evaluateType env e = evalState (w env e) alphabet

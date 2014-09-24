@@ -1,10 +1,7 @@
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, ExtendedDefaultRules #-}
 module Inference where
 import Types
 import Unification (unify)
 import Control.Monad.State
-import Control.Applicative
-import Data.Char (isAsciiUpper)
 import Data.List (delete)
 import qualified Data.Set as Set
 import qualified Data.Map as Map

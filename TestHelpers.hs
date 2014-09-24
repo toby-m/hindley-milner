@@ -3,7 +3,6 @@ import Types
 import Control.Arrow (second)
 import Data.Char  (isAsciiLower)
 import qualified Data.Map as Map
-import qualified Data.Set as Set
 
 -- Empty environment
 emptyEnv :: Environment

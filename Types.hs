@@ -1,9 +1,7 @@
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, ExtendedDefaultRules #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Types where
-import Control.Monad (liftM)
 import Data.Char (isAsciiUpper)
-import Data.List (delete)
-import Data.Maybe (fromJust, mapMaybe, catMaybes, isJust)
+import Data.Maybe (fromJust, isJust)
 import Data.Tuple (swap)
 import qualified Data.Set as Set
 import qualified Data.Map as Map

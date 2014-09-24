@@ -1,7 +1,5 @@
-module Parse (readExpr, readData)
-where
+module Parse (readExpr, readData) where
 import Text.ParserCombinators.Parsec hiding (spaces)
-import System.Environment
 import Types
 import Control.Monad
 
