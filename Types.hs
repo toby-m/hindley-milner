@@ -41,8 +41,9 @@ getType :: Id -> Type
 getType id@(i:_) = if isAsciiUpper i then TConcrete id else TVar id
 
 getDataType :: DataDeclaration -> Environment
-getDataType (DataDeclaration (i:ids) cons) = let ret = TParam i . map getType $ ids
-                                         in Map.fromList $ map (makeScheme . makeConstructor ret) cons
+getDataType (DataDeclaration (i:ids) cons) =
+    let ret = if null ids then TConcrete i else TParam i . map getType $ ids
+    in Map.fromList $ map (makeScheme . makeConstructor ret) cons
   where makeScheme (i, t) = (i, Scheme (Set.toList $ ftv t) t)
 
 makeConstructor :: Type -> Constructor -> (Id, Type)
@@ -86,13 +87,14 @@ instance Types Environment where
   apply new = Map.map (apply new)
 
 instance Types Type where
-  ftv (TConcrete i)     = Set.empty
+  ftv (TConcrete _)     = Set.empty
   ftv (TVar i)          = Set.singleton i
   ftv (TFunction t1 t2) = ftv t1 `Set.union` ftv t2
   ftv (TParam _ ts)     = foldr (Set.union.ftv) Set.empty ts
+  apply _   t@(TConcrete _)   = t
   apply new t@(TVar i)        = Map.findWithDefault t i new
   apply new (TFunction t1 t2) = TFunction (apply new t1) (apply new t2)
-  apply new t                 = t
+  apply new (TParam i ts)     = TParam i $ map (apply new) ts
 
 instance Types Substitution where
   ftv = Set.fromList . Map.keys

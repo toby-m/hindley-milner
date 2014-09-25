@@ -23,19 +23,25 @@ showProgram ds e = show e ++ " :: " ++ show typ ++ (if null subs then "" else "\
         describe (id, sub) = id ++ ": " ++ show sub
         
 
-main = mapM (putStrLn . showProgram [] . readExpr) expressions
+main = mapM (putStrLn . showProgram dataTypes . readExpr) expressions
 
-dataTypes = [ "(data Colour = Red | Green | Blue)"
-            , "(data List a = (Cons a (List a)) | Empty)"
-            ]
+dataTypes = map readData dt
+    where
+    dt = [ "(data (Colour) = Red Green Blue)"
+         , "(data (Either a b) = (Left a) (Right b))"
+         , "(data (IntList) = Empty (Cons Int IntList))"
+         ]
 
 expressions = [ "(lambda (x) (y x))"
               , "(lambda (i j) (i j))"
               , "(lambda (x) (let g Green (if x Red g)))"
-              , "((Cons 5) Empty)"
               , "(let x (lambda (x) Green) (if True x ((lambda (x y) Red) 0)))"
+              , "Red"
               , "Empty"
-              , "Cons"
-              , "(Cons 9)"
-              , "((Cons 9) ((Cons 10) Empty))"
+              , "(Cons 5)"
+              , "((Cons 5) Empty)"
+              , "(Left 9)"
+              , "(Right \"hi\")"
+              , "(if #t (Right 'a') (Left 4))"
+              , "(if (f (Right #f)) (Right 'a') (Left 4))"
               ]
